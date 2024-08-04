@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 /**
  * Сервис верхнего уровня для обработки файла. Используется контроллером
  * {@link edu.java.distributedfileprocessing.controller.ProcessingController} и подписчиком очереди
@@ -23,20 +26,18 @@ public class ProcessingService {
     /**
      * Сохраняет файл в файловое хранилище и создает задачу на обработку файла.
      */
-    public void uploadFile() {
-        fileService.saveFile();
-        rabbitTemplate.convertAndSend(null);
-        // TODO
+    public void uploadFile(InputStream file) throws IOException {
+        String fileId = fileService.saveFile(file);
+//        rabbitTemplate.convertAndSend(null);
     }
 
     /**
      * Загружает файл из файлового хранилища, обрабатывает его и создает отчет.
      * @param id
      */
-    public void processFile(Long id) {
+    public void processFile(String id) throws IOException {
         fileService.getFile(id);
         reportService.createReport();
-        // TODO
     }
 
     /**

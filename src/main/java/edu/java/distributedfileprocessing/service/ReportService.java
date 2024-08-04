@@ -20,7 +20,7 @@ public class ReportService {
      * @return
      */
     public Report getReport(Long id) {
-        // TODO
+        reportRepository.findById(id);
         return null;
     }
 

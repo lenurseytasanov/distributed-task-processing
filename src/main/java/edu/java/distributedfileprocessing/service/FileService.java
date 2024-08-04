@@ -3,6 +3,13 @@ package edu.java.distributedfileprocessing.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+
 /**
  * Сервил для работы с загруженными файлами.
  */
@@ -13,8 +20,11 @@ public class FileService {
     /**
      * Сохраняет файл в хранилище.
      */
-    public void saveFile() {
-        // TODO
+    public String saveFile(InputStream file) throws IOException {
+        String fileId = UUID.randomUUID().toString();
+        Path target = Paths.get("temp", fileId);
+        Files.copy(file, target);
+        return fileId;
     }
 
     /**
@@ -22,9 +32,9 @@ public class FileService {
      * @param id
      * @return
      */
-    public Object getFile(Long id) {
-        // TODO
-        return null;
+    public InputStream getFile(String id) throws IOException {
+        Path path = Paths.get("temp", id);
+        return Files.newInputStream(path);
     }
 
 }
