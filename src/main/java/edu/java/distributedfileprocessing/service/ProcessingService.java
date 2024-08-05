@@ -28,7 +28,7 @@ public class ProcessingService {
      */
     public void uploadFile(InputStream file) throws IOException {
         String fileId = fileService.saveFile(file);
-//        rabbitTemplate.convertAndSend(null);
+        rabbitTemplate.convertAndSend("exchange", "process.file", fileId);
     }
 
     /**

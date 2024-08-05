@@ -1,3 +1,17 @@
 spring:
     application:
         name: distributed-file-processing
+    rabbitmq:
+        host: localhost
+        virtual-host: vhost
+        password: 1234
+        username: rab
+        publisher-returns: true
+    datasource:
+        driver-class-name: org.postgresql.Driver
+        url: jdbc:postgresql://localhost:5432/file_processing_db
+        username: postgres
+        password: postgres
+    jpa:
+        hibernate:
+            ddl-auto: update

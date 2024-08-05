@@ -35,3 +35,6 @@ build/
 .mvn
 mvnw.cmd
 mvnw
+temp
+logs
+rabbitmq
