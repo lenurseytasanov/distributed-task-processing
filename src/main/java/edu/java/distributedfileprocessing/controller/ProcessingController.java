@@ -24,8 +24,8 @@ public class ProcessingController {
     @PostMapping("/files")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
         InputStream inputStream = new ByteArrayInputStream(file.getBytes());
-        processingService.uploadFile(inputStream);
-        return new ResponseEntity<>(HttpStatus.OK);
+        Long reportId = processingService.uploadFile(inputStream);
+        return new ResponseEntity<>(reportId, HttpStatus.OK);
     }
 
     @GetMapping("/reports/{report-id}")

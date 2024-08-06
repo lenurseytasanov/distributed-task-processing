@@ -24,7 +24,7 @@ public class TaskConsumer {
             exchange = @Exchange(value = "exchange", ignoreDeclarationExceptions = "true"),
             key = "process.file")
     )
-    public void processTask(String fileId) throws IOException {
-        processingService.processFile(fileId);
+    public void processTask(ProcessTask task) throws IOException {
+        processingService.processFile(task);
     }
 }

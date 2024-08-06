@@ -24,7 +24,7 @@ public class Report {
 
     private OffsetDateTime createdAt;
 
-    private Long wordCount;
+    private Long tokenCount;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
