@@ -29,7 +29,7 @@ public class ReportService {
     /**
      * Возвращает сохраненный отчет.
      * @param id ID отчета
-     * @return отчет, если существуте, иначе Optional.empty().
+     * @return отчет, если существует, иначе Optional.empty().
      */
     public Optional<Report> getReport(Long id) {
         Objects.requireNonNull(id);
@@ -37,7 +37,7 @@ public class ReportService {
     }
 
     /**
-     * Обрабатывает файл и создает отчет. Отчет сохраняется в базу по указаному ID
+     * Обрабатывает файл и создает отчет. Отчет сохраняется в базу по указанному ID
      * @param file файл для обработки
      * @param reportId ID отчета
      * @throws IOException если ошибка при чтении или записи данных

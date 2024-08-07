@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 /**
- * Сервил для работы с загруженными файлами.
+ * Сервис для работы с загруженными файлами.
  */
 @Service
 @RequiredArgsConstructor

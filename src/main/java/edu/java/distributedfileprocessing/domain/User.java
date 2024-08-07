@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 
 /**
- * Объект пользотельских данных и сущность БД.
+ * Объект пользовательских данных и сущность БД.
  */
 @Entity
 @Table(name = "users")
