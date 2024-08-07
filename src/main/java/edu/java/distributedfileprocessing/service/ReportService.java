@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.StringTokenizer;
 
@@ -27,15 +28,19 @@ public class ReportService {
 
     /**
      * Возвращает сохраненный отчет.
-     * @param id
-     * @return
+     * @param id ID отчета
+     * @return отчет, если существуте, иначе Optional.empty().
      */
     public Optional<Report> getReport(Long id) {
+        Objects.requireNonNull(id);
         return reportRepository.findById(id);
     }
 
     /**
-     * Формирует и сохраняет отчет в БД.
+     * Обрабатывает файл и создает отчет. Отчет сохраняется в базу по указаному ID
+     * @param file файл для обработки
+     * @param reportId ID отчета
+     * @throws IOException если ошибка при чтении или записи данных
      */
     public void createReport(InputStream file, Long reportId) throws IOException {
         OffsetDateTime createdAt = OffsetDateTime.now(clock);

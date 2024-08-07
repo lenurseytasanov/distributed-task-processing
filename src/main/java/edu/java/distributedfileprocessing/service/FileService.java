@@ -23,7 +23,9 @@ public class FileService {
     public String saveFile(InputStream file) throws IOException {
         String fileId = UUID.randomUUID().toString();
         Path target = Paths.get("temp", fileId);
-        Files.copy(file, target);
+        try (file) {
+            Files.copy(file, target);
+        }
         return fileId;
     }
 
