@@ -1,9 +1,10 @@
 package edu.java.distributedfileprocessing.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.UUID;
 
@@ -12,9 +13,9 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "users")
-@AllArgsConstructor
 @NoArgsConstructor
 @Getter
+@ToString
 public class User {
 
     @Id
@@ -22,6 +23,7 @@ public class User {
     private UUID id;
 
     @Column(unique = true)
-    private String username;
+    @Setter
+    private String email;
 
 }

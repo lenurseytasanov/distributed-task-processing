@@ -3,9 +3,15 @@ package edu.java.distributedfileprocessing.service;
 import edu.java.distributedfileprocessing.config.AppProperties;
 import edu.java.distributedfileprocessing.domain.Report;
 import edu.java.distributedfileprocessing.exception.NotFoundException;
+import edu.java.distributedfileprocessing.exception.NotSupportedAuthenticationException;
 import edu.java.distributedfileprocessing.queue.ProcessTask;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +25,7 @@ import java.util.UUID;
  * {@link edu.java.distributedfileprocessing.queue.TaskConsumer}
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ProcessingService {
 
@@ -35,13 +42,20 @@ public class ProcessingService {
      * Создает задачу на обработку файла
      * @param file поток данных для обработки
      * @return ID, по которому можно будет получить отчет после обработки; ID >= 0
-     * @throws IOException если ошибка при чтении или записи данных
      */
     @Transactional
-    public Long uploadFile(InputStream file) throws IOException {
+    @PreAuthorize("isAuthenticated()")
+    public Long uploadFile(@NonNull InputStream file) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!(principal instanceof OidcUser oidcUserPrincipal)) {
+            throw new NotSupportedAuthenticationException("Can't handle authentication %s".formatted(principal));
+        }
+
+        String principalEmail = oidcUserPrincipal.getEmail();
         String fileId = fileService.saveFile(file);
         Long reportId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
-        ProcessTask task = new ProcessTask(reportId, fileId);
+
+        ProcessTask task = new ProcessTask(reportId, fileId, principalEmail);
         rabbitTemplate.convertAndSend(appProperties.getRabbitMq().getExchange(), appProperties.getRabbitMq().getRoutingKey(), task);
         return reportId;
     }
@@ -52,9 +66,10 @@ public class ProcessingService {
      * @throws IOException если ошибка при чтении или записи данных
      */
     @Transactional
-    public void processFile(ProcessTask task) throws IOException {
-        InputStream file = fileService.getFile(task.getFileId());
-        reportService.createReport(file, task.getReportId());
+    public void processFile(@NonNull ProcessTask task) throws IOException {
+        try (InputStream file = fileService.getFile(task.getFileId()).get()) {
+            reportService.createReport(file, task.getReportId(), task.getUserEmail());
+        }
     }
 
     /**
@@ -64,7 +79,7 @@ public class ProcessingService {
      * @throws NotFoundException если отчет с указанным ID еще не создан
      */
     @Transactional
-    public Report getReport(Long reportId) throws NotFoundException {
+    public Report getReport(@NonNull Long reportId) throws NotFoundException {
         return reportService.getReport(reportId).orElseThrow(() ->
                 new NotFoundException("Report with ID '%d' does not exists".formatted(reportId)));
     }

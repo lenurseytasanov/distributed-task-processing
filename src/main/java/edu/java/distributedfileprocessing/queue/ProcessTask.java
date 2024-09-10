@@ -13,4 +13,6 @@ public class ProcessTask implements Serializable {
 
     private String fileId;
 
+    private String userEmail;
+
 }

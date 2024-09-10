@@ -1,9 +1,12 @@
 package edu.java.distributedfileprocessing.service;
 
 import edu.java.distributedfileprocessing.domain.Report;
+import edu.java.distributedfileprocessing.domain.User;
 import edu.java.distributedfileprocessing.repository.ReportRepository;
+import edu.java.distributedfileprocessing.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,6 +27,8 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
 
+    private final UserRepository userRepository;
+
     private final Clock clock;
 
     /**
@@ -42,7 +47,8 @@ public class ReportService {
      * @param reportId ID отчета
      * @throws IOException если ошибка при чтении или записи данных
      */
-    public void createReport(InputStream file, Long reportId) throws IOException {
+    @Transactional
+    public void createReport(InputStream file, Long reportId, String userEmail) throws IOException {
         OffsetDateTime createdAt = OffsetDateTime.now(clock);
         long tokenCount;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file))) {
@@ -50,7 +56,10 @@ public class ReportService {
                     .mapToLong(line -> new StringTokenizer(line).countTokens())
                     .sum();
         }
-        Report report = new Report(reportId, createdAt, tokenCount, null);
+
+        User user = userRepository.findByEmail(userEmail).orElseThrow();
+        Report report = new Report(reportId, createdAt, tokenCount, user);
+
         reportRepository.save(report);
     }
 

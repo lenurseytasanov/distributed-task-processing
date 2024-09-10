@@ -1,6 +1,8 @@
 package edu.java.distributedfileprocessing.service;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -9,22 +11,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * Сервис для работы с загруженными файлами.
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FileService {
 
     /**
      * Сохраняет файл в хранилище.
      */
-    public String saveFile(InputStream file) throws IOException {
+    public String saveFile(@NonNull InputStream file) {
         String fileId = UUID.randomUUID().toString();
         Path target = Paths.get("temp", fileId);
-        try (file) {
+        try {
             Files.copy(file, target);
+        } catch (IOException e) {
+            log.error("I/O error occurs when saving file '%s'".formatted(fileId), e);
+            throw new RuntimeException(e);
         }
         return fileId;
     }
@@ -34,9 +41,16 @@ public class FileService {
      * @param id
      * @return
      */
-    public InputStream getFile(String id) throws IOException {
+    public Supplier<InputStream> getFile(@NonNull String id) {
         Path path = Paths.get("temp", id);
-        return Files.newInputStream(path);
+        return () -> {
+            try {
+                return Files.newInputStream(path);
+            } catch (IOException e) {
+                log.error("I/O error occurs when reading file", e);
+                throw new RuntimeException(e);
+            }
+        };
     }
 
 }
