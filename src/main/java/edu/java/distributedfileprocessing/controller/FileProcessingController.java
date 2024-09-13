@@ -1,9 +1,10 @@
 package edu.java.distributedfileprocessing.controller;
 
-import edu.java.distributedfileprocessing.service.ProcessingService;
+import edu.java.distributedfileprocessing.service.FileProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,9 +18,9 @@ import java.io.InputStream;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-public class ProcessingController {
+public class FileProcessingController {
 
-    private final ProcessingService processingService;
+    private final FileProcessingService fileProcessingService;
 
     /**
      * Загружает файл для обработки
@@ -28,9 +29,9 @@ public class ProcessingController {
      * @throws IOException
      */
     @PostMapping("/files")
-    public ResponseEntity<Long> uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<Long> uploadFile(@RequestParam("file") MultipartFile file, Authentication authentication) throws IOException {
         try (InputStream inputStream = new ByteArrayInputStream(file.getBytes())) {
-            Long reportId = processingService.uploadFile(inputStream);
+            Long reportId = fileProcessingService.uploadFile(inputStream, authentication);
             return new ResponseEntity<>(reportId, HttpStatus.OK);
         }
     }
@@ -42,7 +43,7 @@ public class ProcessingController {
      */
     @GetMapping("/reports/{report-id}")
     public ResponseEntity<?> getReport(@PathVariable(name = "report-id") Long reportId) {
-        return new ResponseEntity<>(processingService.getReport(reportId), HttpStatus.OK);
+        return new ResponseEntity<>(fileProcessingService.getReport(reportId), HttpStatus.OK);
     }
 
 }

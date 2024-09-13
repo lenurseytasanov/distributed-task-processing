@@ -4,6 +4,7 @@ import edu.java.distributedfileprocessing.domain.Report;
 import edu.java.distributedfileprocessing.domain.User;
 import edu.java.distributedfileprocessing.repository.ReportRepository;
 import edu.java.distributedfileprocessing.repository.UserRepository;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +37,7 @@ public class ReportService {
      * @param id ID отчета
      * @return отчет, если существует, иначе Optional.empty().
      */
-    public Optional<Report> getReport(Long id) {
+    public Optional<Report> getReport(@NonNull Long id) {
         Objects.requireNonNull(id);
         return reportRepository.findById(id);
     }
@@ -48,7 +49,7 @@ public class ReportService {
      * @throws IOException если ошибка при чтении или записи данных
      */
     @Transactional
-    public void createReport(InputStream file, Long reportId, String userEmail) throws IOException {
+    public void createReport(@NonNull InputStream file, @NonNull Long reportId, @NonNull String userEmail) throws IOException {
         OffsetDateTime createdAt = OffsetDateTime.now(clock);
         long tokenCount;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file))) {

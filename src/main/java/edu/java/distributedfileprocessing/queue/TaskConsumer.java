@@ -1,6 +1,6 @@
 package edu.java.distributedfileprocessing.queue;
 
-import edu.java.distributedfileprocessing.service.ProcessingService;
+import edu.java.distributedfileprocessing.service.FileProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.Exchange;
 import org.springframework.amqp.rabbit.annotation.Queue;
@@ -17,14 +17,14 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class TaskConsumer {
 
-    private final ProcessingService processingService;
+    private final FileProcessingService fileProcessingService;
 
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue(value = "process.file", durable = "true"),
             exchange = @Exchange(value = "exchange", ignoreDeclarationExceptions = "true"),
             key = "process.file")
     )
-    public void processTask(ProcessTask task) throws IOException {
-        processingService.processFile(task);
+    public void processTask(ProcessFileTask task) throws IOException {
+        fileProcessingService.processFile(task);
     }
 }

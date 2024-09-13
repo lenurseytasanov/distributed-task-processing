@@ -1,33 +1,42 @@
 package edu.java.distributedfileprocessing.service;
 
 import edu.java.distributedfileprocessing.config.AppProperties;
+import edu.java.distributedfileprocessing.controller.FileProcessingController;
 import edu.java.distributedfileprocessing.domain.Report;
 import edu.java.distributedfileprocessing.exception.NotFoundException;
 import edu.java.distributedfileprocessing.exception.NotSupportedAuthenticationException;
-import edu.java.distributedfileprocessing.queue.ProcessTask;
+import edu.java.distributedfileprocessing.queue.ProcessFileTask;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
+import jakarta.validation.constraints.Min;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 import java.util.UUID;
 
 /**
  * Сервис верхнего уровня для обработки файла. Используется контроллером
- * {@link edu.java.distributedfileprocessing.controller.ProcessingController} и подписчиком очереди
+ * {@link FileProcessingController} и подписчиком очереди
  * {@link edu.java.distributedfileprocessing.queue.TaskConsumer}
  */
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ProcessingService {
+@Validated
+public class FileProcessingService {
 
     private final FileService fileService;
 
@@ -37,6 +46,8 @@ public class ProcessingService {
 
     private final AppProperties appProperties;
 
+    private final Validator validator;
+
     /**
      * Сохраняет файл для обработки. Генерирует и возвращает ID для будущего отчета.
      * Создает задачу на обработку файла
@@ -45,19 +56,28 @@ public class ProcessingService {
      */
     @Transactional
     @PreAuthorize("isAuthenticated()")
-    public Long uploadFile(@NonNull InputStream file) {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (!(principal instanceof OidcUser oidcUserPrincipal)) {
-            throw new NotSupportedAuthenticationException("Can't handle authentication %s".formatted(principal));
+    public Long uploadFile(@NonNull InputStream file, @NonNull Authentication authentication) {
+        String userEmail;
+        if (!(authentication instanceof OAuth2AuthenticationToken oAuth2AuthenticationToken)) {
+            throw new NotSupportedAuthenticationException("Not support authentication type [%s]".formatted(authentication));
+        } else if ((userEmail = oAuth2AuthenticationToken.getPrincipal().getAttribute("email")) == null) {
+            throw new NotSupportedAuthenticationException("User must have email");
         }
 
-        String principalEmail = oidcUserPrincipal.getEmail();
         String fileId = fileService.saveFile(file);
-        Long reportId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
-
-        ProcessTask task = new ProcessTask(reportId, fileId, principalEmail);
+        ProcessFileTask task = createProcessFileTask(fileId, userEmail);
         rabbitTemplate.convertAndSend(appProperties.getRabbitMq().getExchange(), appProperties.getRabbitMq().getRoutingKey(), task);
-        return reportId;
+        return task.getReportId();
+    }
+
+    private ProcessFileTask createProcessFileTask(String fileId, String userEmail) {
+        Long reportId = Math.abs(UUID.randomUUID().getLeastSignificantBits());
+        ProcessFileTask task = new ProcessFileTask(reportId, fileId, userEmail);
+        Set<ConstraintViolation<ProcessFileTask>> violations = validator.validate(task);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+        return task;
     }
 
     /**
@@ -66,7 +86,7 @@ public class ProcessingService {
      * @throws IOException если ошибка при чтении или записи данных
      */
     @Transactional
-    public void processFile(@NonNull ProcessTask task) throws IOException {
+    public void processFile(@NonNull ProcessFileTask task) throws IOException {
         try (InputStream file = fileService.getFile(task.getFileId()).get()) {
             reportService.createReport(file, task.getReportId(), task.getUserEmail());
         }
@@ -79,7 +99,9 @@ public class ProcessingService {
      * @throws NotFoundException если отчет с указанным ID еще не создан
      */
     @Transactional
-    public Report getReport(@NonNull Long reportId) throws NotFoundException {
+    @PreAuthorize("isAuthenticated()")
+    @PostAuthorize("returnObject.user.sub == authentication.name")
+    public Report getReport(@NonNull @Min(0) Long reportId) throws NotFoundException {
         return reportService.getReport(reportId).orElseThrow(() ->
                 new NotFoundException("Report with ID '%d' does not exists".formatted(reportId)));
     }

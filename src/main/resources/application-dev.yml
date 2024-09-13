@@ -1,0 +1,41 @@
+spring:
+    servlet:
+        multipart:
+            max-file-size: 2MB
+            max-request-size: 2MB
+    security:
+        oauth2:
+            client:
+                registration:
+                    google:
+                        clientId: ${GOOGLE_OAUTH_CLIENT_ID}
+                        clientSecret: ${GOOGLE_OAUTH_CLIENT_SECRET}
+    rabbitmq:
+        host: localhost
+        port: 5672
+        virtual-host: vhost
+        password: ${RABBIT_PASS}
+        username: ${RABBIT_USER}
+        publisher-returns: true
+    datasource:
+        driver-class-name: org.postgresql.Driver
+        url: jdbc:postgresql://localhost:5432/file_processing_db
+        username: ${POSTGRES_USER}
+        password: ${POSTGRES_PASS}
+    jpa:
+        hibernate:
+            ddl-auto: update
+
+server:
+    port: 8080
+
+app:
+    rabbitmq:
+        exchange: exchange
+        routing-key: process.file
+        queue: process.file
+
+logging:
+    level:
+        org.springframework.security: TRACE
+        org.springframework.web: TRACE

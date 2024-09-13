@@ -1,6 +1,7 @@
 package edu.java.distributedfileprocessing.service;
 
 import edu.java.distributedfileprocessing.domain.User;
+import edu.java.distributedfileprocessing.exception.NotSupportedAuthenticationException;
 import edu.java.distributedfileprocessing.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,19 +32,21 @@ public class SaveUserService extends OidcUserService {
     @Override
     public OidcUser loadUser(OidcUserRequest userRequest) throws OAuth2AuthenticationException {
         OidcUser oidcUser = super.loadUser(userRequest);
-
         log.trace("Load user {}", oidcUser);
         String email = oidcUser.getEmail();
-        if (email != null) {
-            userRepository.findByEmail(email)
-                    .orElseGet(() -> {
-                        User user = new User();
-                        user.setEmail(email);
-                        user = userRepository.save(user);
-                        log.info("Save user {}", user);
-                        return user;
-                    });
+        String sub = oidcUser.getSubject();
+        if (email == null || sub == null) {
+            throw new NotSupportedAuthenticationException("User must have email and subject id");
         }
+        userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    User user = new User();
+                    user.setEmail(email);
+                    user.setSub(sub);
+                    user = userRepository.save(user);
+                    log.info("Save new user {}", user);
+                    return user;
+                });
         return oidcUser;
     }
 

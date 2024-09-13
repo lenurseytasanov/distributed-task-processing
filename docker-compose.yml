@@ -1,30 +1,71 @@
 version: "3.9"
 services:
+    file-processing-app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: file-processing-app:latest
+        profiles: ["prod"]
+        env_file: .env
+        environment:
+            - "SPRING_PROFILES_ACTIVE=prod"
+        ports:
+            - 8080:8080
+        depends_on:
+            postgres:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        networks:
+            - spring_network
     postgres:
         image: postgres:16.2-alpine
+        container_name: postgres
         environment:
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASS}
             POSTGRES_DB: file_processing_db
+        healthcheck:
+            test: pg_isready -d postgres -U postgres
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 5s
         ports:
             - 5432:5432
         volumes:
             - postgres:/var/lib/postgresql/data
+        networks:
+            - spring_network
     rabbitmq:
         image: rabbitmq:latest
+        container_name: rabbitmq
         hostname: rabbitmq
         restart: unless-stopped
         environment:
             TZ: Europe/Moscow
-            RABBITMQ_DEFAULT_USER: rab
-            RABBITMQ_DEFAULT_PASS: 1234
+            RABBITMQ_DEFAULT_USER: ${RABBIT_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBIT_PASS}
             RABBITMQ_DEFAULT_VHOST: vhost
+        healthcheck:
+            test: rabbitmq-diagnostics -q ping
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 5s
         volumes:
             - ./rabbitmq:/var/lib/rabbitmq￼
         ports:
-            - "5672:5672"
-            - "15672:15672"
+            - 5672:5672
+            - 15672:15672
+        networks:
+            - spring_network
 
 volumes:
     postgres:
         driver: local
+
+networks:
+    spring_network:
+        name: spring_network
+        driver: bridge
