@@ -25,6 +25,8 @@ spring:
     jpa:
         hibernate:
             ddl-auto: update
+    liquibase:
+        enabled: false
 
 server:
     port: 8080

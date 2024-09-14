@@ -25,6 +25,11 @@ spring:
     jpa:
         hibernate:
             ddl-auto: validate
+    liquibase:
+        enabled: true
+        drop-first: false
+        change-log: classpath:db/changelog/master.xml
+        default-schema: public
 
 server:
     port: 8080

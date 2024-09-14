@@ -26,7 +26,7 @@ services:
             POSTGRES_PASSWORD: ${POSTGRES_PASS}
             POSTGRES_DB: file_processing_db
         healthcheck:
-            test: pg_isready -d postgres -U postgres
+            test: pg_isready -d file_processing_db -U ${POSTGRES_USER}
             interval: 10s
             timeout: 5s
             retries: 3
