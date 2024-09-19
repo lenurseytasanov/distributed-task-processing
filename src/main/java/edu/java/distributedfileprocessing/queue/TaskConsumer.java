@@ -1,5 +1,6 @@
 package edu.java.distributedfileprocessing.queue;
 
+import edu.java.distributedfileprocessing.dto.ProcessFileTask;
 import edu.java.distributedfileprocessing.service.FileProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.Exchange;

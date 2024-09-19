@@ -25,7 +25,8 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/users/**", "/error", "/login").permitAll()
+                        .requestMatchers("/api/v1/users/**", "/error",
+                                "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .logout(logout -> logout.logoutUrl("/api/v1/users/logout"))

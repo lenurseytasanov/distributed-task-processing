@@ -29,6 +29,7 @@ public class FileService {
         Path target = Paths.get("temp", fileId);
         try {
             Files.copy(file, target);
+            log.info("save file '{}'", fileId);
         } catch (IOException e) {
             log.error("I/O error occurs when saving file '%s'".formatted(fileId), e);
             throw new RuntimeException(e);

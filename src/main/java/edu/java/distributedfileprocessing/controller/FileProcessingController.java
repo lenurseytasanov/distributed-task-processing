@@ -1,5 +1,7 @@
 package edu.java.distributedfileprocessing.controller;
 
+import edu.java.distributedfileprocessing.dto.ReportDto;
+import edu.java.distributedfileprocessing.mapper.ReportMapper;
 import edu.java.distributedfileprocessing.service.FileProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,8 @@ public class FileProcessingController {
 
     private final FileProcessingService fileProcessingService;
 
+    private final ReportMapper reportMapper;
+
     /**
      * Загружает файл для обработки
      * @param file
@@ -42,8 +46,9 @@ public class FileProcessingController {
      * @return
      */
     @GetMapping("/reports/{report-id}")
-    public ResponseEntity<?> getReport(@PathVariable(name = "report-id") Long reportId) {
-        return new ResponseEntity<>(fileProcessingService.getReport(reportId), HttpStatus.OK);
+    public ResponseEntity<ReportDto> getReport(@PathVariable(name = "report-id") Long reportId) {
+        ReportDto reportDto = reportMapper.toDto(fileProcessingService.getReport(reportId));
+        return new ResponseEntity<>(reportDto, HttpStatus.OK);
     }
 
 }
