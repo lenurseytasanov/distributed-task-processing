@@ -9,15 +9,19 @@ services:
         env_file: .env
         environment:
             - "SPRING_PROFILES_ACTIVE=prod"
-        ports:
-            - 8080:8080
         depends_on:
             postgres:
                 condition: service_healthy
             rabbitmq:
                 condition: service_healthy
+            minio:
+                condition: service_healthy
+        ports:
+            - 8080:8080
         networks:
-            - spring_network
+            - app_network
+        volumes:
+            - logs:/var/log/app
     postgres:
         image: postgres:16.2-alpine
         container_name: postgres
@@ -33,10 +37,10 @@ services:
             start_period: 5s
         ports:
             - 5432:5432
+        networks:
+            - app_network
         volumes:
             - postgres:/var/lib/postgresql/data
-        networks:
-            - spring_network
     rabbitmq:
         image: rabbitmq:latest
         container_name: rabbitmq
@@ -53,19 +57,43 @@ services:
             timeout: 5s
             retries: 5
             start_period: 5s
-        volumes:
-            - ./rabbitmq:/var/lib/rabbitmq￼
         ports:
             - 5672:5672
             - 15672:15672
         networks:
-            - spring_network
+            - app_network
+        volumes:
+            - ./rabbitmq:/var/lib/rabbitmq
+    minio:
+        image: minio/minio:latest
+        container_name: minio
+        restart: unless-stopped
+        command: server --console-address ":9001" /data/
+        environment:
+            MINIO_ROOT_USER: ${MINIO_USER}
+            MINIO_ROOT_PASSWORD: ${MINIO_PASS}
+        healthcheck:
+            test: curl -f "http://localhost:9000/minio/health/live"
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        ports:
+            - 9000:9000
+            - 9001:9001
+        networks:
+            - app_network
+        volumes:
+            - minio_data:/data
 
 volumes:
     postgres:
         driver: local
+    logs:
+        driver: local
+    minio_data:
+        driver: local
 
 networks:
-    spring_network:
-        name: spring_network
+    app_network:
+        name: app_network
         driver: bridge

@@ -1,15 +1,12 @@
 package edu.java.distributedfileprocessing.service;
 
+import edu.java.distributedfileprocessing.client.S3Client;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -21,37 +18,27 @@ import java.util.function.Supplier;
 @Slf4j
 public class FileService {
 
+    private final S3Client s3Client;
+
     /**
-     * Сохраняет файл в хранилище.
+     * Сохраняет файл в S3 хранилище.
+     * @param file потока файла
+     * @return ID файла в базе
      */
     public String saveFile(@NonNull InputStream file) {
         String fileId = UUID.randomUUID().toString();
-        Path target = Paths.get("temp", fileId);
-        try {
-            Files.copy(file, target);
-            log.info("save file '{}'", fileId);
-        } catch (IOException e) {
-            log.error("I/O error occurs when saving file '%s'".formatted(fileId), e);
-            throw new RuntimeException(e);
-        }
+        s3Client.putObject(fileId, file);
+        log.info("Save file '{}'", fileId);
         return fileId;
     }
 
     /**
      * Получает файл из хранилища.
-     * @param id
-     * @return
+     * @param id ID файла
+     * @return предоставляет новый поток файла
      */
     public Supplier<InputStream> getFile(@NonNull String id) {
-        Path path = Paths.get("temp", id);
-        return () -> {
-            try {
-                return Files.newInputStream(path);
-            } catch (IOException e) {
-                log.error("I/O error occurs when reading file", e);
-                throw new RuntimeException(e);
-            }
-        };
+        return s3Client.getObject(id);
     }
 
 }

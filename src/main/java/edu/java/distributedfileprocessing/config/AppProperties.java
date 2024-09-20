@@ -11,6 +11,8 @@ public class AppProperties {
 
     private RabbitMQProperties rabbitMq;
 
+    private MinioProperties minio;
+
     @Data
     public static class RabbitMQProperties {
 
@@ -19,6 +21,19 @@ public class AppProperties {
         private String routingKey;
 
         private String queue;
+
+    }
+
+    @Data
+    public static class MinioProperties {
+
+        private String url;
+
+        private String accessKey;
+
+        private String secretKey;
+
+        private String bucketName;
 
     }
 }
