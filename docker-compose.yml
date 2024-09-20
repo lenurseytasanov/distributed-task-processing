@@ -40,7 +40,7 @@ services:
         networks:
             - app_network
         volumes:
-            - postgres:/var/lib/postgresql/data
+            - postgres_data:/var/lib/postgresql/data
     rabbitmq:
         image: rabbitmq:latest
         container_name: rabbitmq
@@ -84,13 +84,30 @@ services:
             - app_network
         volumes:
             - minio_data:/data
+    createbuckets:
+        image: minio/mc
+        container_name: create_buckets
+        depends_on:
+            minio:
+                condition: service_healthy
+        entrypoint: >
+            /bin/sh -c "
+            /usr/bin/mc config host add minio http://minio:9000 ${MINIO_USER} ${MINIO_PASS};
+            /usr/bin/mc mb minio/default;
+            exit 0;
+            "
+        networks:
+            - app_network
 
 volumes:
-    postgres:
+    postgres_data:
+        name: postgres_data
         driver: local
     logs:
+        name: logs
         driver: local
     minio_data:
+        name: minio_data
         driver: local
 
 networks:
