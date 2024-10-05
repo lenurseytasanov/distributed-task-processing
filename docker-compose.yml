@@ -5,6 +5,7 @@ services:
             context: .
             dockerfile: Dockerfile
         image: file-processing-app:latest
+        container_name: file-processing-app
         profiles: ["prod"]
         env_file: .env
         environment:
@@ -22,6 +23,25 @@ services:
             - app_network
         volumes:
             - logs:/var/log/app
+    nginx:
+        image: nginx:1.13
+        container_name: nginx
+        restart: always
+        depends_on:
+            file-processing-app:
+                condition: service_started
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - ./nginx:/etc/nginx/conf.d
+            - ./dhparam:/etc/ssl/certs
+            - ./certs:/etc/mycerts
+#            - web-root:/var/www/html
+#            - certbot-etc:/etc/letsencrypt
+#            - certbot-var:/var/lib/letsencrypt
+        networks:
+            - app_network
     postgres:
         image: postgres:16.2-alpine
         container_name: postgres
